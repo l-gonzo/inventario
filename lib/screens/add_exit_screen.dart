@@ -42,7 +42,6 @@ class _AddExitScreenState extends State<AddExitScreen> {
         return;
       }
 
-      // Obtener todas las entradas ordenadas por fecha (lógica PEPS)
       final entrySnapshots = await productRef
           .collection('entries')
           .orderBy('date')
@@ -61,23 +60,19 @@ class _AddExitScreenState extends State<AddExitScreen> {
         final ref = entry.reference;
 
         if (remaining >= qtyInt) {
-          // Consumimos toda la entrada
           batch.update(ref, {'quantity': 0});
           remaining -= qtyInt;
         } else {
-          // Parcialmente consume esta entrada
           batch.update(ref, {'quantity': qtyInt - remaining});
           remaining = 0;
           break;
         }
       }
 
-      // Actualizar stock general
       batch.update(productRef, {
         'stock': FieldValue.increment(-exitQuantity),
       });
 
-      // Registrar la salida (histórico opcional)
       final exitRef = productRef.collection('exits').doc();
       batch.set(exitRef, {
         'quantity': exitQuantity,
@@ -102,36 +97,70 @@ class _AddExitScreenState extends State<AddExitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text('Salida de ${widget.productName}')),
+      appBar: AppBar(
+        title: Text('Salida de "${widget.productName}"'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _quantityController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Cantidad a retirar'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa una cantidad';
-                  }
-                  final parsed = int.tryParse(value);
-                  if (parsed == null || parsed <= 0) {
-                    return 'Cantidad inválida';
-                  }
-                  return null;
-                },
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Cantidad de unidades que salen del inventario',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Cantidad a retirar',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.remove_circle_outline),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Ingresa una cantidad';
+                      }
+                      final parsed = int.tryParse(value);
+                      if (parsed == null || parsed <= 0) {
+                        return 'Cantidad inválida';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isProcessing ? null : _submitExit,
+                      icon: const Icon(Icons.remove),
+                      label: Text(
+                        _isProcessing ? 'Procesando...' : 'Registrar salida',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _isProcessing ? null : _submitExit,
-                icon: const Icon(Icons.remove),
-                label: const Text('Registrar salida'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

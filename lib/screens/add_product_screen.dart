@@ -40,12 +40,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final minStock = int.tryParse(_minStockController.text) ?? 0;
     final category = _categoryController.text.trim().isNotEmpty
         ? _categoryController.text.trim()
-        : 'General'; // Default category if not provided
+        : 'General';
 
     final data = {
       'name': name,
       'price': price,
-      'category': category, // Default category, can be changed later
+      'category': category,
       'stock': stock,
       'minStock': minStock,
       'date': Timestamp.now(),
@@ -64,66 +64,100 @@ class _AddProductScreenState extends State<AddProductScreen> {
     Navigator.pop(context);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.productToEdit != null ? 'Editar producto' : 'Nuevo producto',
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String? Function(String?) validator,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          decoration: InputDecoration(
+            labelText: label,
+            border: InputBorder.none,
+          ),
         ),
       ),
-      body: Padding(
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.productToEdit != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEdit ? 'Editar producto' : 'Nuevo producto'),
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
             children: [
-              TextFormField(
+              _buildInputField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
+                label: 'Nombre',
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Campo requerido' : null,
               ),
-              TextFormField(
+              _buildInputField(
                 controller: _priceController,
-                decoration: const InputDecoration(labelText: 'Precio'),
+                label: 'Precio',
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   final v = double.tryParse(value ?? '');
                   return v == null || v < 0 ? 'Precio inválido' : null;
                 },
               ),
-              TextFormField(
+              _buildInputField(
                 controller: _categoryController,
-                decoration: const InputDecoration(labelText: 'Categoría'),
+                label: 'Categoría',
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Campo requerido' : null,
               ),
-              TextFormField(
+              _buildInputField(
                 controller: _stockController,
-                decoration: const InputDecoration(labelText: 'Stock actual'),
+                label: 'Stock actual',
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   final v = int.tryParse(value ?? '');
                   return v == null || v < 0 ? 'Stock inválido' : null;
                 },
               ),
-              TextFormField(
+              _buildInputField(
                 controller: _minStockController,
-                decoration: const InputDecoration(labelText: 'Stock mínimo'),
+                label: 'Stock mínimo',
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   final v = int.tryParse(value ?? '');
                   return v == null || v < 0 ? 'Mínimo inválido' : null;
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveProduct,
-                child: Text(
-                  widget.productToEdit != null
-                      ? 'Guardar cambios'
-                      : 'Agregar producto',
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(isEdit ? Icons.save : Icons.add),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _saveProduct,
+                  label: Text(
+                    isEdit ? 'Guardar cambios' : 'Agregar producto',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ],

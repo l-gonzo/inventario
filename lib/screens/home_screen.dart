@@ -1,3 +1,4 @@
+// 🎨 HomeScreen con diseño moderno y amigable
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -43,9 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (_selectedOrder) {
       case OrderByOption.nameAsc:
         products.sort(
-          (a, b) => a['name'].toString().toLowerCase().compareTo(
-            b['name'].toString().toLowerCase(),
-          ),
+          (a, b) => a['name'].toString().compareTo(b['name'].toString()),
         );
         break;
       case OrderByOption.stockDesc:
@@ -80,10 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sesión cerrada exitosamente'),
-                    duration: Duration(seconds: 2),
-                  ),
+                  const SnackBar(content: Text('Sesión cerrada exitosamente')),
                 );
               }
             },
@@ -124,7 +120,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SnackBar(
                   content: Text('Producto eliminado'),
                   backgroundColor: Colors.red,
-                  duration: Duration(seconds: 2),
                 ),
               );
             },
@@ -139,13 +134,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Productos'),
+        title: const Text(
+          'Inventario',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: _confirmLogout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _confirmLogout),
           ValueListenableBuilder<List<String>>(
             valueListenable: InventoryAlertController().lowStockProducts,
             builder: (context, lowStock, _) {
@@ -155,39 +149,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     icon: const Icon(
                       Icons.warning_amber_rounded,
-                      color: Colors.yellow,
+                      color: Colors.orangeAccent,
                     ),
-                    tooltip: 'Productos con baja existencia',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const LowStockScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LowStockScreen()),
+                    ),
                   ),
                   if (lowStock.isNotEmpty)
                     Positioned(
                       right: 6,
                       top: 6,
                       child: Container(
-                        padding: const EdgeInsets.all(1),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           '${lowStock.length}',
                           style: const TextStyle(
+                            fontSize: 10,
                             color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -197,13 +181,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const StatisticsTabbedScreen(),
-                ),
-              );
-            },
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const StatisticsTabbedScreen()),
+            ),
           ),
           PopupMenuButton<OrderByOption>(
             onSelected: (option) => setState(() => _selectedOrder = option),
@@ -219,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const PopupMenuItem(
                 value: OrderByOption.dateDesc,
-                child: Text('Más reciente primero'),
+                child: Text('Más reciente'),
               ),
             ],
           ),
@@ -228,22 +209,22 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Buscar producto',
+                hintText: 'Buscar producto...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchTerm.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          FocusScope.of(context).unfocus();
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
+                filled: true,
+                /* fillColor: Colors.grey[200], */
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
@@ -253,12 +234,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   .collection('products')
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                }
 
-                final allProducts = snapshot.data!.docs;
-                final filtered = allProducts.where((doc) {
+                final filtered = snapshot.data!.docs.where((doc) {
                   final name = (doc['name'] ?? '').toString().toLowerCase();
                   return name.contains(_searchTerm);
                 }).toList();
@@ -272,18 +251,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 return ListView.builder(
+                  padding: const EdgeInsets.only(
+                    bottom: 85,
+                  ), 
                   itemCount: products.length,
                   itemBuilder: (context, index) {
                     final doc = products[index];
                     final data = doc.data() as Map<String, dynamic>;
-
-                    return ListTile(
-                      title: Text(data['name'] ?? 'Sin nombre'),
-                      subtitle: Text(
-                        'Precio: \$${data['price']} - Stock: ${data['stock']}',
+                    final stock = data['stock'] ?? 0;
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      onTap: () {
-                        Navigator.push(
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        title: Text(
+                          data['name'] ?? 'Sin nombre',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          'Precio: \$${data['price']} - Stock: $stock',
+                        ),
+                        onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => ProductDetailScreen(
@@ -291,20 +281,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               productName: data['name'] ?? 'Sin nombre',
                             ),
                           ),
-                        );
-                      },
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editProduct(context, doc),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteProduct(context, doc.id),
-                          ),
-                        ],
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, /* color: Colors.teal */),
+                              onPressed: () => _editProduct(context, doc),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.redAccent,
+                              ),
+                              onPressed: () => _deleteProduct(context, doc.id),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -314,14 +307,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddProductScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddProductScreen()),
+        ),
+        icon: const Icon(Icons.add),
+        label: const Text('Agregar'),
+        /* backgroundColor: Colors.teal, */
       ),
     );
   }

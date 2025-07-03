@@ -53,7 +53,10 @@ class ProductHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Historial de $productName')),
+      appBar: AppBar(
+        title: Text('Historial de $productName'),
+        centerTitle: true,
+      ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: getCombinedMovements(productId),
         builder: (context, snapshot) {
@@ -67,10 +70,16 @@ class ProductHistoryScreen extends StatelessWidget {
 
           final movements = snapshot.data!;
           if (movements.isEmpty) {
-            return const Center(child: Text('No hay movimientos registrados'));
+            return const Center(
+              child: Text(
+                'No hay movimientos registrados',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: movements.length,
             itemBuilder: (context, index) {
               final data = movements[index];
@@ -78,14 +87,28 @@ class ProductHistoryScreen extends StatelessWidget {
               final quantity = data['quantity'] ?? 0;
               final date = (data['date'] as Timestamp).toDate();
 
-              return ListTile(
-                leading: Icon(
-                  isEntry ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: isEntry ? Colors.green : Colors.red,
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: Text('${isEntry ? 'Entrada' : 'Salida'} de $quantity unidades'),
-                subtitle: Text(
-                  'Fecha: ${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: isEntry ? Colors.green : Colors.red,
+                    child: Icon(
+                      isEntry ? Icons.arrow_downward : Icons.arrow_upward,
+                      color: Colors.white,
+                    ),
+                  ),
+                  title: Text(
+                    '${isEntry ? 'Entrada' : 'Salida'} de $quantity unidades',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'Fecha: ${_formatDate(date)}',
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
               );
             },
@@ -93,5 +116,15 @@ class ProductHistoryScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    return '$day/$month/$year $hour:$minute';
   }
 }
