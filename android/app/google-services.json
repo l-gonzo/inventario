@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "922971863459",
+    "project_id": "peps-inv",
+    "storage_bucket": "peps-inv.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:922971863459:android:1e463e9d76d8aa85230216",
+        "android_client_info": {
+          "package_name": "com.example.inventario_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG1fmujl-esJoetoA5fjKesIQgSD8nYDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
